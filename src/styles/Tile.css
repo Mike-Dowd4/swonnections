@@ -1,25 +1,31 @@
 .tile {
-    width: 140px;
-    height: 85px;
-    background-color: #d0d0d1;
-    border-radius: 10px;
-    border: black solid 1px;
-    
+  width: 140px;
+  height: 85px;
+  background-color: #d0d0d1;
+  border-radius: 10px;
+  border: black solid 1px;
+  
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.tile.selected {
+  background-color: #81dffe;
+  transform: scale(0.95);
 }
 
 .tile:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .swimmer-name {
-    font-size: 0.8em;
-    font-weight: 500;
-    font-family: inherit;
-    color:black;
+  font-size: 0.8em;
+  font-weight: 500;
+  font-family: inherit;
+  color:black;
 }
 
 @media (max-width: 700px) {
