@@ -3,12 +3,15 @@ import reactLogo from '../assets/react.svg'
 import viteLogo from '/vite.svg'
 import '../styles/App.css'
 import Tile from './Tile.jsx'
-import { useGetPuzzle } from '../hooks/swonnections';
+import { useGetPuzzle, useSubmitGuess } from '../hooks/swonnections';
 import { set } from 'mongoose'
 
 function App() {
 
-  const { isLoading, puzzleNames, setPuzzleNames } = useGetPuzzle();
+  const { isLoading: isGettingPuzzle, puzzleNames, setPuzzleNames } = useGetPuzzle();
+  const { isLoading: isSubmitting, submitGuess } = useSubmitGuess();
+
+  const isLoading = isGettingPuzzle || isSubmitting;
   const [selectedTiles, setSelectedTiles] = useState(new Set());
 
 
@@ -47,6 +50,12 @@ function App() {
     setSelectedTiles(new Set());
   }
 
+  const submit = () => {
+    // TODO: handle not enough tiles selected
+    if (selectedTiles.size !==4) return; // only submit if there are 4 tiles selected
+    const response =submitGuess({solution: [...selectedTiles]}); // use submit guess with selected tiles as array
+  }
+
 
   return (
     <>
@@ -77,7 +86,7 @@ function App() {
         <div className='buttons'>
           <button onClick={shuffleTiles}>Shuffle</button>
           <button onClick={deselectAll}>Deselect All</button>
-          <button>Submit</button>
+          <button onClick={submit}>Submit</button>
         </div>
       </div>
     </>
