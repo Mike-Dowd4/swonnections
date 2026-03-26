@@ -50,10 +50,12 @@ function App() {
     setSelectedTiles(new Set());
   }
 
-  const submit = () => {
+  const submit = async () => {
     // TODO: handle not enough tiles selected
     if (selectedTiles.size !==4) return; // only submit if there are 4 tiles selected
-    const response =submitGuess({solution: [...selectedTiles]}); // use submit guess with selected tiles as array
+    
+    const response = await submitGuess({solution: [...selectedTiles]}); // use submit guess with selected tiles as array
+    console.log(response);
   }
 
 

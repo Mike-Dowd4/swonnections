@@ -21,8 +21,7 @@ export const useSubmitGuess = () => {
 
     const submitGuess = (guess) => {
         setIsLoading(true);
-        swonnectionService.submitGuess(guess).then((response) => {
-            console.log(response);
+        return swonnectionService.submitGuess(guess).then((response) => {
             setIsLoading(false);
             return response;
         });
