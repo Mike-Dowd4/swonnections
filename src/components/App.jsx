@@ -5,6 +5,7 @@ import '../styles/App.css'
 import Tile from './Tile.jsx'
 import Group from './Group.jsx'
 import { useGetPuzzle, useSubmitGuess } from '../hooks/swonnections';
+import { setItem, getItem } from '../utils/localStorage.js';
 import { set } from 'mongoose'
 
 // Look at this tomorrow to understand how to persist state in local storage cleanly
@@ -21,7 +22,7 @@ function App() {
 
 
   // Fisher-Yates shuffle algorithm
-  const shuffleTiles = () => {
+  const handleShuffleTiles = () => {
     setPuzzleNames(prev => {
       const arr = [...prev];
 
@@ -51,11 +52,11 @@ function App() {
 
   }
 
-  const deselectAll = () => {
+  const handleDeselectAll = () => {
     setSelectedTiles(new Set());
   }
 
-  const submit = async () => {
+  const handleSubmit = async () => {
     // TODO: handle not enough tiles selected
     if (selectedTiles.size !==4) return; // only submit if there are 4 tiles selected
     
@@ -102,9 +103,9 @@ function App() {
         </div>
 
         <div className='buttons'>
-          <button onClick={shuffleTiles}>Shuffle</button>
-          <button onClick={deselectAll}>Deselect All</button>
-          <button onClick={submit}>Submit</button>
+          <button onClick={handleShuffleTiles}>Shuffle</button>
+          <button onClick={handleDeselectAll}>Deselect All</button>
+          <button onClick={handleSubmit}>Submit</button>
         </div>
       </div>
     </>
