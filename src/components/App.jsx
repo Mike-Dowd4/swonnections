@@ -4,22 +4,25 @@ import viteLogo from '/vite.svg'
 import '../styles/App.css'
 import Tile from './Tile.jsx'
 import Group from './Group.jsx'
+import GameOver from './GameOver.jsx';
 import { useGetPuzzle, useSubmitGuess, usePersistedState} from '../hooks/swonnections';
 import { setItem, getItem } from '../utils/localStorage.js';
-import { set } from 'mongoose'
 
-// Look at this tomorrow to understand how to persist state in local storage cleanly
-// https://medium.com/@roman_j/mastering-state-persistence-with-local-storage-in-react-a-complete-guide-1cf3f56ab15c 
 
 function App() {
 
   const { isLoading: isGettingPuzzle, puzzleNames, setPuzzleNames, currentTiles, setCurrentTiles } = useGetPuzzle();
   const { isLoading: isSubmitting, submitGuess } = useSubmitGuess();
-  const MISTAKES_ALLOWED = 4;
 
   const isLoading = isGettingPuzzle || isSubmitting;
   const [selectedTiles, setSelectedTiles] = useState(new Set());
   const [correctGroups, setCorrectGroups] = usePersistedState("correctGroups", []); // array of objects that store the group name and difficulty of each correct group
+  const [numMistakes, setNumMistakes] = usePersistedState('numMistakes', 4);
+  const [correctGuesses, setCorrectGuesses] = usePersistedState('correctGuesses', 0);
+  const [showBoard, setShowBoard] = useState(false);
+
+  const gameOver = (numMistakes === 0 || correctGuesses === 4);
+
 
   // Fisher-Yates shuffle algorithm
   const handleShuffleTiles = () => {
@@ -36,6 +39,8 @@ function App() {
   };
 
   const selectTile = (id) => {
+    if (gameOver) return;
+
     setSelectedTiles(prev => {
       const next = new Set(prev);
 
@@ -70,6 +75,13 @@ function App() {
     return sortedArr.every((n, i) => n === sortedTarget[i]);
   });
   }
+
+  // TODO: When player loses, the correct board should show
+  // Need to add backend endpoint to get the correct puzzle
+  // Eventually make this a nice animation
+  const showCorrectBoard = () => {
+    return;
+  }
   
   const handleCorrect = (response) => {
     setCorrectGroups([...correctGroups, ({
@@ -78,11 +90,18 @@ function App() {
       })]);
 
       setCurrentTiles(prev => prev.filter(id => !selectedTiles.has(id)));
+      setCorrectGuesses(correctGuesses + 1);
 
       setSelectedTiles(new Set());
   }
 
   const handleIncorrect = () => {
+
+    if(numMistakes - 1 === 4) {
+      showCorrectBoard();
+    }
+    setNumMistakes(numMistakes - 1);
+
     // alert('incorrect guess');
   }
 
@@ -113,13 +132,11 @@ function App() {
     console.log(response);
   }
 
-  let numMistakesLeft = 4
-  if (getItem('guesses') !== undefined) numMistakesLeft = MISTAKES_ALLOWED - getItem('guesses').length;
-  
 
   return (
     <>
       <div className='game-container'>
+        { gameOver && !showBoard && <GameOver win={correctGuesses===4} toggleBoard={setShowBoard} /> }
         <div className='title'>
           <h1>Swonnections</h1>
         </div>
@@ -127,42 +144,59 @@ function App() {
 
         
         <div className='grid-container'>
-          {correctGroups.map((group, index) =><Group difficulty={group.difficulty} groupName={group.groupName} />)}
+          { isGettingPuzzle ? (
+            <div>Loading...</div>
+          ) : (
+          <>
+            {correctGroups.map((group, index) =>
+            <Group 
+            difficulty={group.difficulty} 
+            groupName={group.groupName} 
+            key={index}
+            />)}
 
-          {!isLoading && puzzleNames
-          .filter(tile => currentTiles.includes(tile.id))
-          .map((tile, index) => (
-            <Tile
-              onClick={() => selectTile(tile.id)}
-              name={tile.Name}
-              id={tile.id}
-              selected={selectedTiles.has(tile.id)}
-              key={tile.id}
-            />
-          ))}
+            {puzzleNames
+            .filter(tile => currentTiles.includes(tile.id))
+            .map((tile, index) => (
+              <Tile
+                onClick={() => selectTile(tile.id)}
+                name={tile.Name}
+                id={tile.id}
+                selected={selectedTiles.has(tile.id)}
+                key={tile.id}
+                disabled={gameOver}
+              />
+            ))}
+          </>
+          )}
         </div>
         <div className='mistakes-remaining'>
           <span className='mistakes'>Mistakes Remaining: </span>
-          {[...Array(numMistakesLeft)].map((_, i) => 
-          <div className='gray-circle'></div>)}
+          {[...Array(numMistakes)].map((_, idx) => 
+          <div className='gray-circle' key={idx}></div>)}
           
         </div>
 
         <div className='buttons'>
-          <button onClick={handleShuffleTiles}>Shuffle</button>
+          <button 
+          onClick={handleShuffleTiles}
+          disabled={numMistakes === 0}>
+            Shuffle</button>
           <button 
           onClick={handleDeselectAll}
-          disabled={selectedTiles.size === 0}
-          >Deselect All</button>
+          disabled={selectedTiles.size === 0 || numMistakes === 0}>
+            Deselect All
+          </button>
           <button 
           onClick={handleSubmit}
-          disabled={selectedTiles.size < 4}
-          >Submit</button>
+          disabled={selectedTiles.size < 4 || numMistakes === 0}>
+            Submit
+          </button>
         </div>
 
         <button onClick={() => localStorage.clear()}>reset</button>
       </div>
-      { numMistakesLeft === 0 &&
+      { numMistakes === 0 &&
       <div className='game-over'>
         <span>GAME OVER</span>
       </div> }

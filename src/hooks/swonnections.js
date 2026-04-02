@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useLayoutEffect} from 'react';
 import {getItem, setItem} from '../utils/localStorage'
 import * as swonnectionService from '../services/swonnections';
 
