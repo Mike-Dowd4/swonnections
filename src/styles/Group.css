@@ -6,6 +6,7 @@
     height: 85px;
     border-radius: 10px;
     margin-bottom: 5px;
+    grid-column: span 4;
 }
 
 .group-title {

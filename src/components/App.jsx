@@ -4,7 +4,7 @@ import viteLogo from '/vite.svg'
 import '../styles/App.css'
 import Tile from './Tile.jsx'
 import Group from './Group.jsx'
-import { useGetPuzzle, useSubmitGuess } from '../hooks/swonnections';
+import { useGetPuzzle, useSubmitGuess, usePersistedState} from '../hooks/swonnections';
 import { setItem, getItem } from '../utils/localStorage.js';
 import { set } from 'mongoose'
 
@@ -13,13 +13,13 @@ import { set } from 'mongoose'
 
 function App() {
 
-  const { isLoading: isGettingPuzzle, puzzleNames, setPuzzleNames } = useGetPuzzle();
+  const { isLoading: isGettingPuzzle, puzzleNames, setPuzzleNames, currentTiles, setCurrentTiles } = useGetPuzzle();
   const { isLoading: isSubmitting, submitGuess } = useSubmitGuess();
+  const MISTAKES_ALLOWED = 4;
 
   const isLoading = isGettingPuzzle || isSubmitting;
   const [selectedTiles, setSelectedTiles] = useState(new Set());
-  const [correctGroups, setCorrectGroups] = useState([]); // array of objects that store the group name and difficulty of each correct group
-
+  const [correctGroups, setCorrectGroups] = usePersistedState("correctGroups", []); // array of objects that store the group name and difficulty of each correct group
 
   // Fisher-Yates shuffle algorithm
   const handleShuffleTiles = () => {
@@ -56,22 +56,66 @@ function App() {
     setSelectedTiles(new Set());
   }
 
+  // check if this has been guesssed before
+  // guess = array of guess ids
+  const checkIfHappened = (guess) => {
+    const sortedTarget = [...guess].sort();
+    const prevGuesses = getItem('guesses');
+
+    if (prevGuesses === undefined) return false;
+
+
+    return prevGuesses.some(arr => {
+    const sortedArr = [...arr].sort();
+    return sortedArr.every((n, i) => n === sortedTarget[i]);
+  });
+  }
+  
+  const handleCorrect = (response) => {
+    setCorrectGroups([...correctGroups, ({
+       'difficulty': response.difficulty, 
+       'groupName': response.label
+      })]);
+
+      setCurrentTiles(prev => prev.filter(id => !selectedTiles.has(id)));
+
+      setSelectedTiles(new Set());
+  }
+
+  const handleIncorrect = () => {
+    // alert('incorrect guess');
+  }
+
   const handleSubmit = async () => {
     // TODO: handle not enough tiles selected
     if (selectedTiles.size !==4) return; // only submit if there are 4 tiles selected
     
     const response = await submitGuess({solution: [...selectedTiles]}); // use submit guess with selected tiles as array
 
+    if (checkIfHappened([...selectedTiles])) {
+      alert('You already guessed this!');
+      return;
+    }
 
     if(response.correct) {
-      setCorrectGroups([...correctGroups, ({
-       'difficulty': response.difficulty, 
-       'groupName': response.label
-      })]);
+      handleCorrect(response);
     }
+    else {
+      handleIncorrect();
+    }
+
+    let guesses = getItem('guesses');
+    if (guesses != undefined) guesses.push([...selectedTiles]);
+    else guesses = [[...selectedTiles]]; // this means it's the first guess
+
+    setItem('guesses', guesses)
+
     console.log(response);
   }
 
+  let numMistakesLeft = 4
+  if (getItem('guesses') !== undefined) numMistakesLeft = MISTAKES_ALLOWED - getItem('guesses').length;
+  
 
   return (
     <>
@@ -81,10 +125,13 @@ function App() {
         </div>
         <span className='description'>Create Groups of Four!</span>
 
-        {/* display correct groups here */}
-        <Group difficulty='purple' groupName='NCAA Champions 2024'/>
+        
         <div className='grid-container'>
-          {!isLoading && puzzleNames.map((tile, index) => (
+          {correctGroups.map((group, index) =><Group difficulty={group.difficulty} groupName={group.groupName} />)}
+
+          {!isLoading && puzzleNames
+          .filter(tile => currentTiles.includes(tile.id))
+          .map((tile, index) => (
             <Tile
               onClick={() => selectTile(tile.id)}
               name={tile.Name}
@@ -96,18 +143,29 @@ function App() {
         </div>
         <div className='mistakes-remaining'>
           <span className='mistakes'>Mistakes Remaining: </span>
-          <div className='gray-circle'></div>
-          <div className='gray-circle'></div>
-          <div className='gray-circle'></div>
-          <div className='gray-circle'></div>
+          {[...Array(numMistakesLeft)].map((_, i) => 
+          <div className='gray-circle'></div>)}
+          
         </div>
 
         <div className='buttons'>
           <button onClick={handleShuffleTiles}>Shuffle</button>
-          <button onClick={handleDeselectAll}>Deselect All</button>
-          <button onClick={handleSubmit}>Submit</button>
+          <button 
+          onClick={handleDeselectAll}
+          disabled={selectedTiles.size === 0}
+          >Deselect All</button>
+          <button 
+          onClick={handleSubmit}
+          disabled={selectedTiles.size < 4}
+          >Submit</button>
         </div>
+
+        <button onClick={() => localStorage.clear()}>reset</button>
       </div>
+      { numMistakesLeft === 0 &&
+      <div className='game-over'>
+        <span>GAME OVER</span>
+      </div> }
     </>
   )
 }

@@ -1,6 +1,6 @@
 export function setItem(key, value) {
     try {
-        localStorage.setItem(JSON.stringify(value));
+        localStorage.setItem(key, JSON.stringify(value));
     } catch(error) {
         console.error("Error saving to localStorage: ", error);
     }

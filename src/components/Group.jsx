@@ -1,11 +1,17 @@
 import '../styles/Group.css'
 
 function Group(props) {
-    const backgroundColor = props.difficulty;
+    const difficultyColors = {
+        1: 'yellow',
+        2: 'green',
+        3: 'blue',
+        4: 'purple'
+    };
+
     return (
         <>
             <div className='correct-group' 
-            style={{ backgroundColor: backgroundColor }}>
+            style={{ backgroundColor: difficultyColors[props.difficulty] }}>
                 <span className='group-title'>{props.groupName}</span>
             </div>
         </>

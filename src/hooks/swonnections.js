@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import {getItem, setItem} from '../utils/localStorage'
 import * as swonnectionService from '../services/swonnections';
 
 //fisher-yates shuffle algorithm
@@ -23,17 +24,22 @@ function shuffleArray(array) {
 export const useGetPuzzle = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [puzzleNames, setPuzzleNames] = useState([]);
+    const [currentTiles, setCurrentTiles] = usePersistedState('currentTiles', []);
 
     useEffect(() => {
         setIsLoading(true);
-        swonnectionService.getPuzzle().then(({ swimmers }) => { // api responds with swimmers array, each swimmer has a Name prop 
-            const shuffledSwimmers = shuffleArray(swimmers); // shuffle the swimmers array
+        swonnectionService.getPuzzle().then(({ swimmers }) => { // api responds with swimmers array, each swimmer has a Name and id
+            const shuffledSwimmers = shuffleArray(swimmers); 
             setPuzzleNames(shuffledSwimmers);
+            
+            if(getItem('currentTiles') === undefined || getItem('currentTiles').length === 0) {
+                setCurrentTiles(shuffledSwimmers.map((swimmer) => swimmer.id));
+            }
             setIsLoading(false);
         });
     }, []);
 
-    return { isLoading, puzzleNames, setPuzzleNames };
+    return { isLoading, puzzleNames, setPuzzleNames, currentTiles, setCurrentTiles };
 }
 
 export const useSubmitGuess = () => {
@@ -48,4 +54,19 @@ export const useSubmitGuess = () => {
     }
 
     return { isLoading, submitGuess };
+}
+
+// Persists board state in localStorage
+// sets state to the value in localStorage at 'key' if it exists, otherwise sets it to defaultValue
+// Whenever the state changes, it updates the value in localStorage at 'key' to the new state value
+export const usePersistedState = (key, defaultValue) => {
+    const [state, setState] = useState(() => {
+        return getItem(key) ?? defaultValue;
+    });
+
+    useEffect(() => {
+        setItem(key,state);
+    }, [key, state]);
+
+    return [state, setState]
 }
