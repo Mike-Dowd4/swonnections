@@ -16,6 +16,7 @@ function App() {
 
   const isLoading = isGettingPuzzle || isSubmitting;
   const [selectedTiles, setSelectedTiles] = useState(new Set());
+  const [guesses, setGuesses] = usePersistedState('guesses', []);
   const [correctGroups, setCorrectGroups] = usePersistedState("correctGroups", []); // array of objects that store the group name and difficulty of each correct group
   const [numMistakes, setNumMistakes] = usePersistedState('numMistakes', 4);
   const [correctGuesses, setCorrectGuesses] = usePersistedState('correctGuesses', 0);
@@ -65,12 +66,11 @@ function App() {
   // guess = array of guess ids
   const checkIfHappened = (guess) => {
     const sortedTarget = [...guess].sort();
-    const prevGuesses = getItem('guesses');
 
-    if (prevGuesses === undefined) return false;
+    if (guesses.length === 0) return false;
 
 
-    return prevGuesses.some(arr => {
+    return guesses.some(arr => {
     const sortedArr = [...arr].sort();
     return sortedArr.every((n, i) => n === sortedTarget[i]);
   });
@@ -84,9 +84,13 @@ function App() {
   }
   
   const handleCorrect = (response) => {
+    const names = [...selectedTiles].map(
+      id => puzzleNames.find(p => p.id === id)?.Name
+    );
     setCorrectGroups([...correctGroups, ({
        'difficulty': response.difficulty, 
-       'groupName': response.label
+       'groupName': response.label,
+       'names': names
       })]);
 
       setCurrentTiles(prev => prev.filter(id => !selectedTiles.has(id)));
@@ -123,12 +127,8 @@ function App() {
       handleIncorrect();
     }
 
-    let guesses = getItem('guesses');
-    if (guesses != undefined) guesses.push([...selectedTiles]);
-    else guesses = [[...selectedTiles]]; // this means it's the first guess
-
-    setItem('guesses', guesses)
-
+    setGuesses([...guesses, [...selectedTiles]]);
+    
     console.log(response);
   }
 
@@ -151,7 +151,8 @@ function App() {
             {correctGroups.map((group, index) =>
             <Group 
             difficulty={group.difficulty} 
-            groupName={group.groupName} 
+            groupName={group.groupName}
+            names={group.names}
             key={index}
             />)}
 

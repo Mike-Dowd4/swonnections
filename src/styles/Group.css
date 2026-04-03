@@ -9,11 +9,24 @@
     grid-column: span 4;
 }
 
+.group-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.group-swimmers {
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 400;
+  color: rgb(50, 50, 50);
+}
+
 .group-title {
-    font-weight: 500;
-    font-family: inherit;
-    color:black;
-    margin-right: 1rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  font-family: inherit;
+  color:black;
 }
 
 
