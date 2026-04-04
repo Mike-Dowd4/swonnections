@@ -1,0 +1,24 @@
+.text-box {
+    display: flex;
+    align-items: center;
+    background-color: #172A3A;
+    position: absolute;
+    height: 3rem;
+    top: 25%;
+    opacity: 0;
+    z-index: 100;
+    transition: all 0.5s ease;
+    border-radius: 10px;
+    transform: translateY(-10px);
+}
+
+.text-box.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.message-text {
+    padding: 10px;
+    color: rgb(255, 255, 255);
+    text-align: center;
+}

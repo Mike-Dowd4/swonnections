@@ -5,6 +5,7 @@ import '../styles/App.css'
 import Tile from './Tile.jsx'
 import Group from './Group.jsx'
 import GameOver from './GameOver.jsx';
+import ShowMessage from './ShowMessage.jsx'
 import { useGetPuzzle, useSubmitGuess, usePersistedState} from '../hooks/swonnections';
 import { setItem, getItem } from '../utils/localStorage.js';
 
@@ -21,6 +22,8 @@ function App() {
   const [numMistakes, setNumMistakes] = usePersistedState('numMistakes', 4);
   const [correctGuesses, setCorrectGuesses] = usePersistedState('correctGuesses', 0);
   const [showBoard, setShowBoard] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [showMessage, setShowMessage] = useState(false);
 
   const gameOver = (numMistakes === 0 || correctGuesses === 4);
 
@@ -101,6 +104,8 @@ function App() {
 
   const handleIncorrect = () => {
 
+    // TODO: Need to add shaking animation here so users know it is incorrect
+
     if(numMistakes - 1 === 4) {
       showCorrectBoard();
     }
@@ -112,11 +117,17 @@ function App() {
   const handleSubmit = async () => {
     // TODO: handle not enough tiles selected
     if (selectedTiles.size !==4) return; // only submit if there are 4 tiles selected
+    if (showMessage) return; // Don't submit if there is a message up (so it doesn't cause flickering)
     
     const response = await submitGuess({solution: [...selectedTiles]}); // use submit guess with selected tiles as array
 
     if (checkIfHappened([...selectedTiles])) {
-      alert('You already guessed this!');
+      setMessage('You already guessed this!');
+      setShowMessage(true);
+      
+      setTimeout(() => {
+        setShowMessage(false);
+      }, 3000);
       return;
     }
 
@@ -142,6 +153,7 @@ function App() {
         </div>
         <span className='description'>Create Groups of Four!</span>
 
+          <ShowMessage message={message} show={showMessage} />
         
         <div className='grid-container'>
           { isGettingPuzzle ? (
