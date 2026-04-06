@@ -1,12 +1,13 @@
 .tile {
-  width: 140px;
-  height: 85px;
+  width: 100%;
+  height: 100px;
   background-color: #d0d0d1;
   border-radius: 10px;
   border: black solid 1px;
   
 
   display: flex;
+  flex-direction: column-reverse;
   justify-content: center;
   align-items: center;
   transition: background-color 0.2s ease, transform 0.15s ease;
@@ -26,15 +27,22 @@
 }
 
 .swimmer-name {
-  font-size: 0.8em;
+  font-size: 0.9rem;
   font-weight: 500;
   font-family: inherit;
   color:black;
+  padding: 2px;
+}
+
+.swimmer-img {
+  width: 40%;
 }
 
 @media (max-width: 700px) {
-  .tile {
-    width: 100px;
-    height: 100px;
+  .swimmer-name {
+    font-size: 0.7rem;
+  }
+  .swimmer-img {
+    width: 50%;
   }
 }

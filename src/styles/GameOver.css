@@ -10,7 +10,7 @@
     transform: translate(-50%, -50%);
 
     height: 70vh;
-    width: 50vw;
+    width: 30vw;
     background-color: black;
     border-color: white;
     border: 2px solid;
@@ -20,6 +20,16 @@
 
 }
 
+.game-over-container > span {
+    padding: 10px;
+}
+
 .view-board-button {
     width: 40%;
+}
+
+@media (max-width: 700px) {
+  .game-over-container {
+    width: 75vw;
+  }
 }

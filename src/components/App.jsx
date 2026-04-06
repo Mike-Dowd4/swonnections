@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import reactLogo from '../assets/react.svg'
 import viteLogo from '/vite.svg'
+import JSConfetti from "js-confetti";
 import '../styles/App.css'
 import Tile from './Tile.jsx'
 import Group from './Group.jsx'
 import GameOver from './GameOver.jsx';
 import ShowMessage from './ShowMessage.jsx'
-import { useGetPuzzle, useSubmitGuess, usePersistedState} from '../hooks/swonnections';
+import { useGetPuzzle, useSubmitGuess, usePersistedState, useDailyReset} from '../hooks/swonnections';
 import { setItem, getItem } from '../utils/localStorage.js';
 
 
@@ -28,6 +29,17 @@ function App() {
   const gameOver = (numMistakes === 0 || correctGuesses === 4);
 
 
+  const resetGame = () => {
+    setGuesses([])
+    setSelectedTiles(new Set());
+    setCorrectGroups([]);
+    setNumMistakes(4);
+    setCurrentTiles(puzzleNames.map((swimmer) => swimmer.id));
+    setCorrectGuesses(0);
+  }
+  useDailyReset(resetGame);
+
+
   // Fisher-Yates shuffle algorithm
   const handleShuffleTiles = () => {
     setPuzzleNames(prev => {
@@ -41,6 +53,15 @@ function App() {
       return arr;
     });
   };
+
+  const displayMessage = (message) => {
+    setMessage(message);
+    setShowMessage(true);
+
+    setTimeout(() => {
+      setShowMessage(false);
+    }, 3000);
+  }
 
   const selectTile = (id) => {
     if (gameOver) return;
@@ -79,10 +100,22 @@ function App() {
   });
   }
 
+
+
   // TODO: When player loses, the correct board should show
   // Need to add backend endpoint to get the correct puzzle
   // Eventually make this a nice animation
-  const showCorrectBoard = () => {
+  const showCorrectBoard = (solution) => {
+    const newGroups = [];
+    for (let i = 0; i < solution.length; i += 4) {
+      newGroups.push({
+        difficulty: solution[i].group_difficulty,
+        groupName: solution[i].group_label,
+        names: solution.slice(i, i + 4).map(s => s.Name)
+      });
+    }
+    setCorrectGroups(newGroups);
+    setCurrentTiles([]);
     return;
   }
   
@@ -90,54 +123,53 @@ function App() {
     const names = [...selectedTiles].map(
       id => puzzleNames.find(p => p.id === id)?.Name
     );
+
     setCorrectGroups([...correctGroups, ({
        'difficulty': response.difficulty, 
        'groupName': response.label,
        'names': names
-      })]);
+    })]);
 
-      setCurrentTiles(prev => prev.filter(id => !selectedTiles.has(id)));
-      setCorrectGuesses(correctGuesses + 1);
 
-      setSelectedTiles(new Set());
+    if(response.correctGuesses === 4) {
+      const jsConfetti = new JSConfetti();
+      jsConfetti.addConfetti();
+    }
+
+    setCurrentTiles(prev => prev.filter(id => !selectedTiles.has(id)));
+    setCorrectGuesses(response.correctGuesses);
+
+    setSelectedTiles(new Set());
   }
 
-  const handleIncorrect = () => {
+  const handleIncorrect = (response) => {
 
     // TODO: Need to add shaking animation here so users know it is incorrect
 
-    if(numMistakes - 1 === 4) {
-      showCorrectBoard();
+    if(response.oneAway) displayMessage("One Away...");
+    if(response.lost) {
+      showCorrectBoard(response.solution);
     }
-    setNumMistakes(numMistakes - 1);
+    setNumMistakes(response.numMistakes);
 
     // alert('incorrect guess');
   }
 
   const handleSubmit = async () => {
-    // TODO: handle not enough tiles selected
     if (selectedTiles.size !==4) return; // only submit if there are 4 tiles selected
     if (showMessage) return; // Don't submit if there is a message up (so it doesn't cause flickering)
-    
-    const response = await submitGuess({solution: [...selectedTiles]}); // use submit guess with selected tiles as array
 
     if (checkIfHappened([...selectedTiles])) {
-      setMessage('You already guessed this!');
-      setShowMessage(true);
-      
-      setTimeout(() => {
-        setShowMessage(false);
-      }, 3000);
+      displayMessage("You already guessed this!");
       return;
     }
-
+    const response = await submitGuess({solution: [...selectedTiles], numMistakes: numMistakes, correctGuesses: correctGuesses}); // use submit guess with selected tiles as array
     if(response.correct) {
       handleCorrect(response);
     }
     else {
-      handleIncorrect();
+      handleIncorrect(response);
     }
-
     setGuesses([...guesses, [...selectedTiles]]);
     
     console.log(response);
@@ -146,8 +178,9 @@ function App() {
 
   return (
     <>
-      <div className='game-container'>
-        { gameOver && !showBoard && <GameOver win={correctGuesses===4} toggleBoard={setShowBoard} /> }
+      { gameOver && !showBoard && <GameOver win={correctGuesses===4} toggleBoard={setShowBoard} /> }
+      <div className='game-container' onClick={() => {if (gameOver) setShowBoard(prev => !prev);}}>
+
         <div className='title'>
           <h1>Swonnections</h1>
         </div>
@@ -168,7 +201,7 @@ function App() {
             key={index}
             />)}
 
-            {puzzleNames
+            { !gameOver && puzzleNames
             .filter(tile => currentTiles.includes(tile.id))
             .map((tile, index) => (
               <Tile
@@ -206,13 +239,16 @@ function App() {
             Submit
           </button>
         </div>
-
-        <button onClick={() => localStorage.clear()}>reset</button>
+        
       </div>
-      { numMistakes === 0 &&
-      <div className='game-over'>
-        <span>GAME OVER</span>
-      </div> }
+      {/* { gameOver && 
+        <button onClick={() => setShowBoard(false)}>Message</button>
+        } */}
+
+      {/* This is for dev */}
+      {/* <button onClick={() => {
+        resetGame() }
+        }>reset</button> */}
     </>
   )
 }

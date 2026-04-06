@@ -70,3 +70,15 @@ export const usePersistedState = (key, defaultValue) => {
 
     return [state, setState]
 }
+
+export const useDailyReset = (resetGame) => {
+    useEffect(() => {
+        const today = new Date().toDateString();
+        const lastPlayed = getItem('swonnections-lastPlayed');
+
+        if(lastPlayed != today) {
+            resetGame();
+            setItem('swonnections-lastPlayed', today);
+        }
+    }, []);
+}

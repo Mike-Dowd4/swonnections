@@ -16,6 +16,8 @@ function GameOver(props) {
                 <span>You ran out of guesses :(</span>
             )}
 
+            <span>Come back tomorrow for a new game!</span>
+
             <button 
             className='view-board-button'
             onClick={() => props.toggleBoard(true)}>View board</button>

@@ -10,6 +10,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 5px;
   margin-bottom: 1.5rem;
+  width: 700px;
 }
 
 .title {
@@ -59,6 +60,16 @@
 
 .buttons button:hover {
   border-color: #646cff;
+}
+
+@media (max-width: 700px) {
+  .grid-container {
+    width: 95vw;
+  }
+
+  .buttons button {
+    font-size: 0.9rem;
+  }
 }
 
 
