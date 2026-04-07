@@ -10,7 +10,7 @@ function Tile(props) {
                 className='swimmer-img'
                 src={`/swimmer_images/${props.name.replaceAll(" ", "_")}.webp`}
                 onError={(e) => {
-                    e.currentTarget.src = "/placeholder.png";
+                    e.currentTarget.src = "/swimmer_images/placeholder.png";
                 }}
                 />
             </div>
