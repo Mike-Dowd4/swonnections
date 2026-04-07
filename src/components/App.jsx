@@ -25,6 +25,8 @@ function App() {
   const [showBoard, setShowBoard] = useState(false);
   const [message, setMessage] = useState(null);
   const [showMessage, setShowMessage] = useState(false);
+  const [shakeAnimation, setShakeAnimation] = useState(false);
+  const [disabled, setDisabled] = useState(false); // Allows easy disabling of buttons
 
   const gameOver = (numMistakes === 0 || correctGuesses === 4);
 
@@ -57,9 +59,11 @@ function App() {
   const displayMessage = (message) => {
     setMessage(message);
     setShowMessage(true);
+    setDisabled(true)
 
     setTimeout(() => {
       setShowMessage(false);
+      setDisabled(false);
     }, 3000);
   }
 
@@ -145,12 +149,16 @@ function App() {
   const handleIncorrect = (response) => {
 
     // TODO: Need to add shaking animation here so users know it is incorrect
-
-    if(response.oneAway) displayMessage("One Away...");
-    if(response.lost) {
-      showCorrectBoard(response.solution);
-    }
-    setNumMistakes(response.numMistakes);
+    setShakeAnimation(true)
+    setDisabled(true);
+    setTimeout(() => {
+      setNumMistakes(response.numMistakes);
+      setDisabled(false);
+      if(response.oneAway) displayMessage("One Away...");
+      if(response.lost) {
+        showCorrectBoard(response.solution);
+      }
+    }, 1000);
 
     // alert('incorrect guess');
   }
@@ -172,13 +180,12 @@ function App() {
     }
     setGuesses([...guesses, [...selectedTiles]]);
     
-    console.log(response);
   }
 
 
   return (
     <>
-      { gameOver && !showBoard && <GameOver win={correctGuesses===4} toggleBoard={setShowBoard} /> }
+      <GameOver win={correctGuesses===4} gameOver={gameOver} showBoard={showBoard} toggleBoard={setShowBoard} /> 
       <div className='game-container' onClick={() => {if (gameOver) setShowBoard(prev => !prev);}}>
 
         <div className='title'>
@@ -210,6 +217,8 @@ function App() {
                 id={tile.id}
                 selected={selectedTiles.has(tile.id)}
                 key={tile.id}
+                shake={shakeAnimation}
+                setShakeAnimation={setShakeAnimation}
                 disabled={gameOver}
               />
             ))}
@@ -226,16 +235,16 @@ function App() {
         <div className='buttons'>
           <button 
           onClick={handleShuffleTiles}
-          disabled={numMistakes === 0}>
+          disabled={numMistakes === 0 || disabled}>
             Shuffle</button>
           <button 
           onClick={handleDeselectAll}
-          disabled={selectedTiles.size === 0 || numMistakes === 0}>
+          disabled={selectedTiles.size === 0 || numMistakes === 0 || disabled}>
             Deselect All
           </button>
           <button 
           onClick={handleSubmit}
-          disabled={selectedTiles.size < 4 || numMistakes === 0}>
+          disabled={selectedTiles.size < 4 || numMistakes === 0 || disabled}>
             Submit
           </button>
         </div>

@@ -2,14 +2,9 @@ import '../styles/GameOver.css';
 
 function GameOver(props) {
 
-    const handleViewBoard = () => {
-
-    }
-
-
     return (
         <>
-        <div className='game-over-container'>
+        <div className={`game-over-container ${props.gameOver && !props.showBoard ? 'show': ''}`}>
             {props.win ? (
                 <span>You win!</span>
             ): (
