@@ -7,6 +7,7 @@ import Tile from './Tile.jsx'
 import Group from './Group.jsx'
 import GameOver from './GameOver.jsx';
 import ShowMessage from './ShowMessage.jsx'
+import MoreGames from './MoreGames.jsx'
 import { useGetPuzzle, useSubmitGuess, usePersistedState, useDailyReset} from '../hooks/swonnections';
 import { setItem, getItem } from '../utils/localStorage.js';
 
@@ -250,6 +251,8 @@ function App() {
         </div>
         
       </div>
+
+      {gameOver && <MoreGames />}
       {/* { gameOver && 
         <button onClick={() => setShowBoard(false)}>Message</button>
         } */}
